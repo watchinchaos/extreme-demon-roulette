@@ -1,4 +1,4 @@
-import { PointercrateDemon } from './types';
+import { SimplifiedDemon } from './types';
 
 export function shuffle<T>(a: T[]): T[] {
     for (let i = a.length - 1; i > 0; i--) {
@@ -13,23 +13,12 @@ export function clearArray(a: any[]) {
 }
 
 // stupid pointercrate keeps going down
-export function fakeDemon(name: string, creator: string, video: string | null): PointercrateDemon {
+export function fakeDemon(name: string, creator: string, video: string | null): SimplifiedDemon {
     return {
-        id: 1,
-        level_id: Math.floor(Math.random() * 1000000),
         name,
         position: Math.floor(Math.random() * 100),
-        publisher: {
-            banned: false,
-            id: 1,
-            name: creator,
-        },
-        requirement: 1,
-        verifier: {
-            banned: false,
-            id: 1,
-            name: 'a',
-        },
+        creator,
+        levelID: Math.floor(Math.random() * 1000000),
         video,
     };
 }

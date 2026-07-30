@@ -3,15 +3,7 @@
         class="flex flex-col md:flex-row p-5 shadow-lg w-full"
         :class="{ 'fade-in-up': animate }"
     >
-        <a :href="demon.video ? `https://youtu.be/${demon.video}` : '#'" target="_blank" rel="noopener noreferrer">
-            <img
-                class="w-full md:w-48 md:h-28"
-                loading="lazy"
-                :src="`https://i.ytimg.com/vi/${demon.video}/mqdefault.jpg`"
-                alt="thumbnail"
-            />
-        </a>
-        <div class="flex mt-2 md:mt-0 justify-between md:justify-start">
+        <div class="flex mt-2 md:mt-0 justify-between md:justify-start w-full">
             <div class="flex flex-col md:ml-5">
                 <a
                     :href="demon.link ?? `https://pointercrate.com/demonlist/${demon.position}`"
@@ -28,7 +20,7 @@
                     by {{ demon.creator }}
                 </section>
             </div>
-            <div v-if="active && demon.levelID">
+            <div v-if="active && demon.levelID" class="flex items-start">
                 <div
                     class="text-gray-400 hover:text-gray-600 active:text-gray-900 hover:cursor-pointer mt-3 ml-2"
                     @click="clipboardCopy"

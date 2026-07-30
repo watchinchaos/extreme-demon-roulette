@@ -1,23 +1,23 @@
 import { encode, decode } from '@msgpack/msgpack';
 import { inflateSync, deflateSync, strFromU8, unzlibSync } from 'fflate';
 import { base64ToBytes } from 'byte-base64';
-import type { PointercrateDemon, SimplifiedDemon, RouletteState } from './types';
+import type { SheetDemon, SimplifiedDemon, RouletteState } from './types';
 
-export function simplifyDemon(demon: PointercrateDemon): SimplifiedDemon {
-    const match = demon.video?.match(/https:\/\/www\.youtube\.com\/watch\?v=(.{11})/);
+export function simplifyDemon(demon: SheetDemon, position: number): SimplifiedDemon {
+    const rawId = demon.ID;
+    const levelID = typeof rawId === 'number' ? rawId : rawId ? Number(rawId) : undefined;
+
     return {
-        name: demon.name,
-        creator: demon.publisher.name,
-        position: demon.position,
-        levelID: demon.level_id,
-        video: match ? match[1] : null,
+        name: demon['Level Name'] ?? '',
+        creator: demon['Creator Name'] ?? '',
+        position,
+        levelID: Number.isFinite(levelID) ? levelID : undefined,
     };
 }
 
 export function compressState(state: RouletteState): Uint8Array {
     const data = {
         ...state,
-        // demons: state.demons.map(demon => Object.values(demon)),
         version: 1,
     };
     const encoded = encode(data);
@@ -58,7 +58,6 @@ function handleOldSave(data: Uint8Array): RouletteState {
                 position: demon[0],
                 name: demon[1],
                 creator: demon[2],
-                video: demon[3],
                 // no level id :(
             } as SimplifiedDemon;
         }),

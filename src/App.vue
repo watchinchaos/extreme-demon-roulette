@@ -12,20 +12,7 @@
                     <p v-if="useOldList">2017 List</p>
                 </h1>
                 <div class="flex mt-5 mx-3 justify-between items-center">
-                    <div class="flex flex-col text-gray-800 dark:text-gray-300">
-                        <label>
-                            <input type="checkbox" v-model="selectedLists.main" :disabled="useOldList" />
-                            Main list
-                        </label>
-                        <label v-if="!useOldList">
-                            <input type="checkbox" v-model="selectedLists.extended" />
-                            Extended list
-                        </label>
-                        <label v-if="!useOldList">
-                            <input type="checkbox" v-model="selectedLists.legacy" />
-                            Legacy list
-                        </label>
-                    </div>
+                    <div class="flex"></div>
                     <div class="flex">
                         <button
                             @click="showSaveModal = true"
@@ -138,6 +125,8 @@ import { veryOldDemons } from './veryOldList';
 import { simplifyDemon, compressState, decompressState } from './save';
 import { saveAs } from 'file-saver';
 
+const SHEET_URL = 'https://opensheet.elk.sh/1j3ZTSqM-YCTIZpUbMYRRKFmFIOTG3HcybHSBx7d8rCw/Sheet1';
+
 export default defineComponent({
     components: {
         Demon,
@@ -146,26 +135,15 @@ export default defineComponent({
         GiveUpModal,
     },
     setup() {
-        const selectedLists = reactive({
-            main: true,
-            extended: true,
-            legacy: false,
-        });
-
         let demons = reactive([] as SimplifiedDemon[]);
 
-        async function fetchDemons(
-            after: number = 0,
-            limit: number = 100
-        ): Promise<SimplifiedDemon[]> {
-            const response = await fetch(
-                `https://pointercrate.com/api/v2/demons/listed/?limit=${limit}&after=${after}`
-            );
+        async function fetchDemons(): Promise<SimplifiedDemon[]> {
+            const response = await fetch(SHEET_URL);
             if (response.ok) {
-                return (await response.json()).map(simplifyDemon);
-            } else {
-                return [];
+                const data = await response.json();
+                return data.map((demon: unknown, index: number) => simplifyDemon(demon as any, index + 1));
             }
+            return [];
         }
 
         const playing = ref(false);
@@ -180,26 +158,15 @@ export default defineComponent({
 
         async function start() {
             if (fetching.value) return;
-            if (!Object.values(selectedLists).some(i => i)) return;
             playing.value = true;
             fetching.value = true;
             showRemaining.value = false;
             clearArray(demons);
             currentDemon.value = -1;
-            // if (false) {
-            //     for (let i = 0; i < 50; ++i) {
-            //         demons.push(fakeDemon(fakeDemonName(), 'MAT', null));
-            //     }
-            // }
-            if (selectedLists.main) demons.push(...(await fetchDemons(0, 75)));
-            if (selectedLists.extended) demons.push(...(await fetchDemons(75, 75)));
-            if (selectedLists.legacy) {
-                demons.push(...(await fetchDemons(150)));
-                // is this even worth it
-                demons.push(...(await fetchDemons(250)).filter(demon => demon.levelID));
-            }
             if (useOldList.value) {
-                demons = veryOldDemons.slice();
+                demons.push(...veryOldDemons.slice());
+            } else {
+                demons.push(...(await fetchDemons()));
             }
             fetching.value = false;
             shuffle(demons);
@@ -254,7 +221,11 @@ export default defineComponent({
         function save() {
             const state: RouletteState = {
                 playing: playing.value,
-                selectedLists,
+                selectedLists: {
+                    main: true,
+                    extended: true,
+                    legacy: false,
+                },
                 demons: demons,
                 current: currentDemon.value,
                 percent: currentPercent.value,
@@ -279,7 +250,6 @@ export default defineComponent({
             file.arrayBuffer().then(buffer => {
                 const state = decompressState(new Uint8Array(buffer));
                 playing.value = state.playing;
-                Object.assign(selectedLists, state.selectedLists);
                 clearArray(demons);
                 demons.push(...state.demons);
                 currentDemon.value = state.current;
@@ -305,7 +275,6 @@ export default defineComponent({
             percents,
             demonDone,
             giveUp,
-            selectedLists,
             start,
             playing,
             fetching,
